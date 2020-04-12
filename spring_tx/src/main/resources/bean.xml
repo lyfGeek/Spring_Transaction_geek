@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--<context:component-scan base-package="com.geek"/>-->
+
+    <!-- Spring 中基于 xml 的声明式事务控制。-->
+    <!-- 事务管理器。-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!-- 配置事务通知。-->
+    <!-- transaction-manager="transactionManager"。给事务通知提供一个事务管理器引用。-->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <!-- 配置事务属性。-->
+        <!--
+        isolation="" ～事务隔离级别。默认 DEFAULT。使用数据库的默认隔离级别。
+        no-rollback-for=""  ～ 用于指定一个异常，当产生该异常时，事务不回滚，产生其他异常时，事务回滚。没有默认值，表示任意异常都回滚。
+        propagation="" ～事务传播行为。默认 REQUIRED，表示一定会有事务，增删改的选择。查询方法可以选择 SUPPORTS。
+        read-only="" ～事务是否只读。只有查询方法才能设置为 true。默认 false，表示读写。
+        rollback-for=""  ～ 用于指定一个异常，当产生该异常时，事务回滚，产生其他异常时，事务不回滚。没有默认值，表示任意异常都回滚。
+        timeout="" ～事务超时时间。默认 -1，永不超时。以秒为单位。
+        -->
+        <tx:attributes>
+            <tx:method name="*" propagation="REQUIRED" read-only="false"/>
+            <tx:method name="find*" propagation="SUPPORTS" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+    <!-- 配置 aop。-->
+    <aop:config>
+        <!-- 配置 aop 通用切入点表达式。-->
+        <aop:pointcut id="pt1" expression="execution(* com.geek.service.impl.*.*(..))"/>
+        <!-- 建立切入点表达式和事务通知的关系。-->
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="pt1"/>
+    </aop:config>
+
+    <!-- 配置业务层。-->
+    <bean id="accountService" class="com.geek.service.impl.AccountServiceImpl">
+        <property name="accountDao" ref="accountDao"/>
+    </bean>
+
+    <!-- 配置账户持久层。-->
+    <bean id="accountDao" class="com.geek.dao.impl.AccountDaoImpl">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 配置数据源。-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://192.168.142.135:3307/geek_spring_dbutils"/>
+        <property name="username" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+</beans>

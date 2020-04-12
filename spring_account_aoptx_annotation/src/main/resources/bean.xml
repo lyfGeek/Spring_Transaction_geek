@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- Spring 创建容器时要扫描的包。-->
+    <context:component-scan base-package="com.geek"/>
+
+    <!-- 配置 QueryRunner 对象。-->
+    <bean id="queryRunner" class="org.apache.commons.dbutils.QueryRunner"
+          scope="prototype"><!-- prototype，每来一个连接创建一个对象，线程安全。-->
+    </bean>
+
+    <!-- 配置数据源对象。-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!-- 连接数据库的必备信息。-->
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://192.168.142.135:3307/geek_spring_dbutils"/>
+        <property name="user" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+    <!-- 开启 Spring 对注解 aop 的支持。-->
+    <aop:aspectj-autoproxy/>
+</beans>
+

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 配置 service 对象。-->
+    <bean id="accountService" class="com.geek.service.impl.AccountServiceImpl">
+        <!-- 注入 dao。-->
+        <property name="accountDao" ref="accountDao"/>
+        <!-- 注入事务管理器。-->
+        <property name="transactionManager" ref="txManager"/>
+    </bean>
+
+    <!-- 配置 dao 对象。-->
+    <bean id="accountDao" class="com.geek.dao.impl.AccountDaoImpl">
+        <!-- 注入 QueryRunner。-->
+        <property name="queryRunner" ref="queryRunner"/>
+
+        <!-- 注入 ConnectionUtils。-->
+        <property name="connectionUtils" ref="connectionUtils"/>
+    </bean>
+
+    <!--    &lt;!&ndash; 配置 QueryRunner 对象。&ndash;&gt;
+        <bean id="queryRunner" class="org.apache.commons.dbutils.QueryRunner"
+              scope="prototype">&lt;!&ndash; prototype，每来一个连接创建一个对象，线程安全。&ndash;&gt;
+            &lt;!&ndash; 注入数据源。&ndash;&gt;
+            <constructor-arg name="ds" ref="dataSource"/>
+        </bean>-->
+
+    <!-- 配置 QueryRunner 对象。-->
+    <bean id="queryRunner" class="org.apache.commons.dbutils.QueryRunner"
+          scope="prototype"><!-- prototype，每来一个连接创建一个对象，线程安全。-->
+    </bean>
+
+    <!-- 配置数据源对象。-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <!-- 连接数据库的必备信息。-->
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="jdbcUrl" value="jdbc:mysql://192.168.142.135:3307/geek_spring_dbutils"/>
+        <property name="user" value="root"/>
+        <property name="password" value="root"/>
+    </bean>
+
+    <!-- 配置 Connection 的工具类。-->
+    <bean id="connectionUtils" class="com.geek.utils.ConnectionUtils">
+        <!-- 注入数据源。-->
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 配置业务层的管理器。-->
+    <bean id="txManager" class="com.geek.utils.TransactionManager">
+        <!-- 注入 ConnectionUtils。-->
+        <property name="connectionUtils" ref="connectionUtils"/>
+    </bean>
+
+    <!-- 配置 aop。-->
+    <aop:config>
+        <!-- 切入点表达式。-->
+        <aop:pointcut id="pt1" expression="execution(* com.geek.service.impl.*.*(..))"/>
+        <aop:aspect id="txAdvice" ref="txManager">
+            <!-- 前置通知：开启事务。-->
+            <aop:before method="beginTransaction" pointcut-ref="pt1"/>
+            <!-- 后置通知：提交事务。-->
+            <aop:after method="commitTransaction" pointcut-ref="pt1"/>
+            <!-- 异常通知：回滚事务。-->
+            <aop:after-returning method="rollbackTransaction" pointcut-ref="pt1"/>
+            <!-- 最终通知：释放连接。-->
+            <aop:after method="release" pointcut-ref="pt1"/>
+        </aop:aspect>
+    </aop:config>
+</beans>
+
